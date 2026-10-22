@@ -16,6 +16,30 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
 
+import socket
+
+def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex((host, port)) == 0
+
+def check_existing_services():
+    backend_busy = is_port_in_use(8000)
+    frontend_busy = is_port_in_use(5173)
+
+    if backend_busy or frontend_busy:
+        print("\n [!] Notice: One or more services are ALREADY RUNNING on your system:")
+        if backend_busy:
+            print("     * Port 8000 (Backend) is already active.")
+        if frontend_busy:
+            print("     * Port 5173 (Frontend) is already active.")
+        print("\n [i] You can already access SevaDristi directly in your browser:")
+        print("     -> http://127.0.0.1:5173\n")
+        print(" To restart services, first terminate the existing processes:")
+        print("     powershell: Stop-Process -Id (Get-NetTCPConnection -LocalPort 8000,5173).OwningProcess -Force\n")
+        return False
+    return True
+
 def print_banner():
     banner = r"""
   =============================================================
@@ -35,6 +59,9 @@ def print_banner():
     print(" [i] Press Ctrl+C at any time to gracefully stop both servers.\n")
 
 def main():
+    if not check_existing_services():
+        sys.exit(0)
+
     print_banner()
 
     # Determine command executables
