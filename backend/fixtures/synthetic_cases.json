@@ -1,0 +1,324 @@
+{
+  "presets": {
+    "preset_1_red": {
+      "preset_id": "preset_1_red",
+      "title": "Preset 1: RED (Multiple Discrepancies & Expiry)",
+      "scheme_id": "epass_scholarship",
+      "overall_status": "NEEDS_REVIEW",
+      "summary": "Flagged surname mismatch, initial expansion, expired income certificate, and blurred bank passbook.",
+      "documents": [
+        {
+          "id": "doc_identity_1",
+          "doc_type": "IDENTITY_CARD",
+          "doc_name": "Aadhaar Card (Synthetic)",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "dob": "2001-08-14",
+            "pincode": "500032",
+            "id_reference": "XXXX-XXXX-9123"
+          },
+          "blur_score": 245.2,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.02,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": false,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.95
+        },
+        {
+          "id": "doc_ration_1",
+          "doc_type": "RATION_CARD",
+          "doc_name": "Food Security Card / Ration Card",
+          "extracted_fields": {
+            "full_name": "S. RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "dob": "2001-08-14",
+            "pincode": "500032",
+            "id_reference": "FSC-2022-7789"
+          },
+          "blur_score": 182.1,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.015,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.92
+        },
+        {
+          "id": "doc_bank_1",
+          "doc_type": "BANK_PASSBOOK",
+          "doc_name": "Bank Passbook First Page",
+          "extracted_fields": {
+            "full_name": "KONDAPALLI RAKESH",
+            "guardian_name": "K. RAMULU",
+            "dob": null,
+            "pincode": "500032",
+            "id_reference": "SB-9876543210"
+          },
+          "blur_score": 62.4,
+          "blur_threshold": 110.0,
+          "is_blurred": true,
+          "glare_ratio": 0.03,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": false,
+          "possible_seal_detected": false,
+          "possible_signature_detected": false,
+          "ocr_confidence": 0.68
+        },
+        {
+          "id": "doc_income_1",
+          "doc_type": "INCOME_CERT",
+          "doc_name": "Income Certificate (MeeSeva)",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "SARIPILLY VENKATESHWARLU",
+            "issue_date": "2024-05-10",
+            "annual_income_inr": 120000,
+            "id_reference": "IC-2024-998811"
+          },
+          "blur_score": 195.4,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.02,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.96
+        }
+      ]
+    },
+    "preset_2_yellow": {
+      "preset_id": "preset_2_yellow",
+      "title": "Preset 2: YELLOW (Initial & Phonetic Variations)",
+      "scheme_id": "aasara_pension",
+      "overall_status": "NEEDS_REVIEW",
+      "summary": "Phonetic similarity between SARIPILLY and SARIPILLI; initial expansion S. RAKESH requires human advisory.",
+      "documents": [
+        {
+          "id": "doc_identity_2",
+          "doc_type": "IDENTITY_CARD",
+          "doc_name": "Aadhaar Card (Synthetic)",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "dob": "1965-04-12",
+            "pincode": "500032",
+            "id_reference": "XXXX-XXXX-9123"
+          },
+          "blur_score": 260.0,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.02,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": false,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.97
+        },
+        {
+          "id": "doc_ration_2",
+          "doc_type": "RATION_CARD",
+          "doc_name": "Ration Card (MeeSeva)",
+          "extracted_fields": {
+            "full_name": "SARIPILLI RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "dob": "1965-04-12",
+            "pincode": "500032",
+            "id_reference": "FSC-2022-7789"
+          },
+          "blur_score": 210.5,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.03,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.94
+        },
+        {
+          "id": "doc_bank_2",
+          "doc_type": "BANK_PASSBOOK",
+          "doc_name": "Bank Passbook",
+          "extracted_fields": {
+            "full_name": "S. RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "dob": null,
+            "pincode": "500032",
+            "id_reference": "SB-1122334455"
+          },
+          "blur_score": 190.2,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.025,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.91
+        }
+      ]
+    },
+    "preset_3_green": {
+      "preset_id": "preset_3_green",
+      "title": "Preset 3: GREEN (Clean & Ready for Verification)",
+      "scheme_id": "epass_scholarship",
+      "overall_status": "NO_ISSUES_DETECTED",
+      "summary": "All required documents present, sharp images, high name alignment across all credentials.",
+      "documents": [
+        {
+          "id": "doc_identity_3",
+          "doc_type": "IDENTITY_CARD",
+          "doc_name": "Aadhaar Card (Synthetic)",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "SARIPILLY VENKATESHWARLU",
+            "dob": "2001-08-14",
+            "pincode": "500032",
+            "id_reference": "XXXX-XXXX-9123"
+          },
+          "blur_score": 280.0,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.01,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": false,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.98
+        },
+        {
+          "id": "doc_caste_3",
+          "doc_type": "CASTE_CERT",
+          "doc_name": "Integrated Caste Certificate",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "SARIPILLY VENKATESHWARLU",
+            "dob": "2001-08-14",
+            "issue_date": "2025-02-15",
+            "id_reference": "CC-2025-443322"
+          },
+          "blur_score": 240.5,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.015,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.96
+        },
+        {
+          "id": "doc_income_3",
+          "doc_type": "INCOME_CERT",
+          "doc_name": "Income Certificate",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "SARIPILLY VENKATESHWARLU",
+            "annual_income_inr": 115000,
+            "issue_date": "2026-03-01",
+            "id_reference": "IC-2026-112233"
+          },
+          "blur_score": 255.0,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.02,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.97
+        },
+        {
+          "id": "doc_bank_3",
+          "doc_type": "BANK_PASSBOOK",
+          "doc_name": "Bank Passbook",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "SARIPILLY VENKATESHWARLU",
+            "id_reference": "SB-5566778899"
+          },
+          "blur_score": 220.0,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.018,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": true,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.95
+        }
+      ]
+    },
+    "preset_4_glare_seal": {
+      "preset_id": "preset_4_glare_seal",
+      "title": "Preset 4: Quality Warnings (Glare & Uncertain Seal)",
+      "scheme_id": "epass_scholarship",
+      "overall_status": "NEEDS_REVIEW",
+      "summary": "15.2% glare ratio exceeds threshold (0.08); certificate official seal not detected by automated heuristic.",
+      "documents": [
+        {
+          "id": "doc_identity_4",
+          "doc_type": "IDENTITY_CARD",
+          "doc_name": "Aadhaar Card (Synthetic)",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "dob": "2001-08-14",
+            "pincode": "500032",
+            "id_reference": "XXXX-XXXX-9123"
+          },
+          "blur_score": 190.0,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.152,
+          "glare_threshold": 0.08,
+          "has_glare": true,
+          "crop_applied": true,
+          "possible_seal_detected": false,
+          "possible_signature_detected": true,
+          "ocr_confidence": 0.81
+        },
+        {
+          "id": "doc_income_4",
+          "doc_type": "INCOME_CERT",
+          "doc_name": "Income Certificate",
+          "extracted_fields": {
+            "full_name": "SARIPILLY RAKESH",
+            "guardian_name": "S. VENKATESHWARLU",
+            "annual_income_inr": 125000,
+            "issue_date": "2026-01-20",
+            "id_reference": "IC-2026-778899"
+          },
+          "blur_score": 185.0,
+          "blur_threshold": 110.0,
+          "is_blurred": false,
+          "glare_ratio": 0.04,
+          "glare_threshold": 0.08,
+          "has_glare": false,
+          "crop_applied": true,
+          "possible_seal_detected": false,
+          "possible_signature_detected": false,
+          "ocr_confidence": 0.84
+        }
+      ]
+    }
+  }
+}

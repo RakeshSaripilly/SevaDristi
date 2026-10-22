@@ -1,0 +1,16 @@
+{
+  "name": "SevaDristi — Pre-Verification Assistant",
+  "short_name": "SevaDristi",
+  "description": "Offline-capable, multilingual pre-verification assistant for Telangana MeeSeva & CSC service centres.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

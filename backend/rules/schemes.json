@@ -1,0 +1,89 @@
+{
+  "version": "2026.1.0",
+  "schemes": [
+    {
+      "id": "epass_scholarship",
+      "display_name": "Telangana ePASS Post-Matric Scholarship",
+      "display_name_te": "తెలంగాణ ఈపాస్ పోస్ట్-మెట్రిక్ స్కాలర్‌షిప్",
+      "jurisdiction": "Telangana State",
+      "verification_state": "VERIFIED",
+      "rule_source": "Telangana ePASS Official Portal / Social Welfare Dept GO Ms No. 45",
+      "effective_date": "2024-06-01",
+      "last_verified_date": "2026-01-15",
+      "config_version": "v1.2",
+      "required_documents": [
+        "IDENTITY_CARD",
+        "CASTE_CERT",
+        "INCOME_CERT",
+        "BANK_PASSBOOK"
+      ],
+      "field_requirements": {
+        "INCOME_CERT": {
+          "max_annual_income_inr": 200000,
+          "max_age_months_validity": 12
+        },
+        "IDENTITY_CARD": {
+          "required_fields": ["full_name", "dob"]
+        },
+        "BANK_PASSBOOK": {
+          "required_fields": ["full_name", "id_reference"]
+        }
+      },
+      "description": "Financial assistance for SC/ST/BC/EBC/Minority students pursuing post-matriculation courses."
+    },
+    {
+      "id": "aasara_pension",
+      "display_name": "Aasara / Cheyutha Pension Scheme",
+      "display_name_te": "ఆసరా / చేయూత పింఛను పథకం",
+      "jurisdiction": "Telangana State",
+      "verification_state": "VERIFIED",
+      "rule_source": "Panchayat Raj & Rural Development Department, Telangana GO Ms No. 28",
+      "effective_date": "2023-11-01",
+      "last_verified_date": "2026-02-10",
+      "config_version": "v2.0",
+      "required_documents": [
+        "IDENTITY_CARD",
+        "RATION_CARD",
+        "BANK_PASSBOOK"
+      ],
+      "field_requirements": {
+        "IDENTITY_CARD": {
+          "min_age_years": 57,
+          "required_fields": ["full_name", "dob"]
+        },
+        "RATION_CARD": {
+          "required_fields": ["full_name"]
+        },
+        "BANK_PASSBOOK": {
+          "required_fields": ["full_name", "id_reference"]
+        }
+      },
+      "description": "Monthly financial pension to senior citizens, widows, and vulnerable persons in Telangana."
+    },
+    {
+      "id": "rythu_bharosa",
+      "display_name": "Rythu Bharosa Investment Support",
+      "display_name_te": "రైతు భరోసా పెట్టుబడి సహాయం",
+      "jurisdiction": "Telangana State",
+      "verification_state": "DEMO_ONLY",
+      "rule_source": "Department of Agriculture & Farmers Welfare, Telangana (Guidelines Draft 2026)",
+      "effective_date": "2025-01-01",
+      "last_verified_date": "2026-03-01",
+      "config_version": "v0.9-draft",
+      "required_documents": [
+        "IDENTITY_CARD",
+        "LAND_PASSBOOK",
+        "BANK_PASSBOOK"
+      ],
+      "field_requirements": {
+        "LAND_PASSBOOK": {
+          "required_fields": ["full_name", "id_reference"]
+        },
+        "BANK_PASSBOOK": {
+          "required_fields": ["full_name", "id_reference"]
+        }
+      },
+      "description": "Agricultural investment support for farmers. Note: Policy rules undergoing official government update."
+    }
+  ]
+}
