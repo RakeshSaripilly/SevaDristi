@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sevadristi-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sevadristi_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sevadristi_password}
+      POSTGRES_DB: ${POSTGRES_DB:-sevadristi_audit}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sevadristi_user} -d ${POSTGRES_DB:-sevadristi_audit}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sevadristi-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: sevadristi-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sevadristi-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: sevadristi-backend
+    environment:
+      - DEMO_MODE=${DEMO_MODE:-true}
+      - SEVADRISTI_QR_SECRET=${SEVADRISTI_QR_SECRET:-prod_sec_d849fa81bc3904e2810a01dfb034789ac28190cba76541239847102938475610}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-sevadristi_user}:${POSTGRES_PASSWORD:-sevadristi_password}@postgres:5432/${POSTGRES_DB:-sevadristi_audit}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
+      - WEB_CONCURRENCY=2
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sevadristi-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    container_name: sevadristi-frontend
+    ports:
+      - "5173:80"
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sevadristi-net
+
+networks:
+  sevadristi-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

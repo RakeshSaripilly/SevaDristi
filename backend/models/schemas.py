@@ -106,3 +106,17 @@ class DecodedQRResponse(BaseModel):
     issued_at: Optional[str] = None
     expires_at: Optional[str] = None
     warnings: List[str] = Field(default_factory=list)
+
+class SingleDocExtractionResponse(BaseModel):
+    extracted_name: Optional[str] = None
+    confidence: float
+    doc_type: str
+    quality: Dict[str, Any]
+    preview_data_url: Optional[str] = None
+    extracted_fields: Dict[str, Any] = Field(default_factory=dict)
+    advisories: List[Dict[str, str]] = Field(default_factory=list)
+
+class ClearSessionResponse(BaseModel):
+    status: str
+    session_id: str
+    message: str

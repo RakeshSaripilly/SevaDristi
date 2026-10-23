@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sevadristi
+  labels:
+    app.kubernetes.io/name: sevadristi
+    app.kubernetes.io/part-of: telangana-meeseva

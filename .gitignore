@@ -49,6 +49,11 @@ pnpm-debug.log*
 lerna-debug.log*
 *.log
 
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
 # Environment & Secrets
 .env
 .env.local

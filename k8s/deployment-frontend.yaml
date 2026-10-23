@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sevadristi-frontend
+  namespace: sevadristi
+  labels:
+    app: sevadristi
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sevadristi
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: sevadristi
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/rakeshsaripilly/sevadristi-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false

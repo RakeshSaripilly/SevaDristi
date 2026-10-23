@@ -1,5 +1,6 @@
-// SevaDristi Offline Service Worker
-const CACHE_NAME = 'sevadristi-shell-v1';
+// SevaDristi Offline Service Worker — Privacy-Hardened & Versioned
+const CACHE_VERSION = 'v1.2.0';
+const STATIC_CACHE_NAME = `sevadristi-shell-${CACHE_VERSION}`;
 
 // Only static UI shell assets are permitted to be cached
 const STATIC_ASSETS = [
@@ -11,7 +12,7 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(STATIC_CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
@@ -23,7 +24,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== STATIC_CACHE_NAME) {
+            console.log('[SW] Purging outdated cache:', key);
             return caches.delete(key);
           }
         })
@@ -33,11 +35,36 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Listener for explicit logout/clear commands to enforce zero-leakage privacy
+self.addEventListener('message', (event) => {
+  if (event.data && (event.data.action === 'CLEAR_CACHE' || event.data.action === 'LOGOUT')) {
+    event.waitUntil(
+      caches.keys().then((keys) => {
+        return Promise.all(
+          keys.map((key) => {
+            console.log('[SW] User reset requested: Purging cache:', key);
+            return caches.delete(key);
+          })
+        );
+      }).then(() => {
+        if (event.ports && event.ports[0]) {
+          event.ports[0].postMessage({ status: 'CLEARED' });
+        }
+      })
+    );
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // STRICT PRIVACY RULE: Never cache API requests, document uploads, OCR results, or QR payloads
-  if (url.pathname.startsWith('/api') || event.request.method !== 'GET') {
+  // STRICT PRIVACY RULE: Never cache API requests, document uploads, OCR results, metrics, or QR payloads
+  if (
+    url.pathname.startsWith('/api') || 
+    url.pathname.startsWith('/metrics') || 
+    url.pathname.startsWith('/health') || 
+    event.request.method !== 'GET'
+  ) {
     return;
   }
 
@@ -45,9 +72,9 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        if (response.status === 200) {
+        if (response.status === 200 && response.type === 'basic') {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
+          caches.open(STATIC_CACHE_NAME).then((cache) => {
             cache.put(event.request, clone);
           });
         }

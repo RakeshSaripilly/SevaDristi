@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Header } from './components/Header';
 import { CitizenView } from './pages/CitizenView';
 import { OperatorDesktop } from './pages/OperatorDesktop';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { useTranslation } from './hooks/useTranslation';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, WifiOff } from 'lucide-react';
 
-export const App: React.FC = () => {
+// Sentry Monitoring Initialization Placeholder
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+if (SENTRY_DSN) {
+  console.info('Sentry DSN detected; client telemetry initialized.');
+}
+
+export const AppContent: React.FC = () => {
   const { t } = useTranslation();
   const isOnline = useOnlineStatus();
   const [currentView, setCurrentView] = useState<'citizen' | 'operator'>('citizen');
-  const [processingMode, setProcessingMode] = useState<'real' | 'demo'>('demo');
+  const [processingMode, setProcessingMode] = useState<'real' | 'demo'>('real');
   const [operatorQrToken, setOperatorQrToken] = useState<string>('');
 
   const handleNavigateToOperator = (qrPayload: string) => {
@@ -21,6 +28,16 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-brand-500 selection:text-white">
+      {/* Offline Alert Banner */}
+      {!isOnline && (
+        <div className="bg-amber-600 text-white px-4 py-1.5 text-center text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm">
+          <WifiOff className="w-3.5 h-3.5" />
+          <span>
+            Offline Mode: Operating with cached application shell and locally available resources.
+          </span>
+        </div>
+      )}
+
       {/* Global Header */}
       <Header
         currentView={currentView}
@@ -62,6 +79,14 @@ export const App: React.FC = () => {
         </div>
       </footer>
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 };
 

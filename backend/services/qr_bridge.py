@@ -6,10 +6,31 @@ import base64
 import hmac
 import hashlib
 import time
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 import qrcode
 
-DEFAULT_SECRET = os.getenv("SEVADRISTI_QR_SECRET", "sevadristi_hackathon_demo_secret_key_2026")
+DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() in ("true", "1", "yes")
+DEFAULT_DEMO_SECRET = "sevadristi_hackathon_demo_secret_key_2026"
+
+def get_signing_secret() -> str:
+    """
+    Retrieves the primary active signing secret.
+    In production (DEMO_MODE=false), fails closed if secret is missing or insecure.
+    """
+    secret = os.getenv("SEVADRISTI_QR_SECRET")
+    if not secret:
+        if not DEMO_MODE:
+            raise RuntimeError(
+                "CRITICAL SECURITY CONFIGURATION ERROR: "
+                "SEVADRISTI_QR_SECRET must be securely provided via environment or secrets manager in production."
+            )
+        return DEFAULT_DEMO_SECRET
+    return secret
+
+def get_rotated_old_secret() -> Optional[str]:
+    """Retrieves previous signing secret during zero-downtime key rotation windows."""
+    return os.getenv("SEVADRISTI_QR_SECRET_OLD")
+
 EXPIRY_SECONDS_DEFAULT = 7 * 24 * 3600  # 7 days
 
 def base64url_encode(data: bytes) -> str:
@@ -19,11 +40,12 @@ def base64url_decode(data_str: str) -> bytes:
     padding = "=" * (4 - (len(data_str) % 4)) if len(data_str) % 4 != 0 else ""
     return base64.urlsafe_b64decode(data_str + padding)
 
-def sign_payload(payload_bytes: bytes, secret: str = DEFAULT_SECRET) -> str:
+def sign_payload(payload_bytes: bytes, secret: Optional[str] = None) -> str:
     """
     Computes HMAC-SHA256 signature and returns base64url string.
     """
-    sig = hmac.new(secret.encode("utf-8"), payload_bytes, hashlib.sha256).digest()
+    active_secret = secret or get_signing_secret()
+    sig = hmac.new(active_secret.encode("utf-8"), payload_bytes, hashlib.sha256).digest()
     return base64url_encode(sig)
 
 def generate_signed_qr_payload(
@@ -33,7 +55,7 @@ def generate_signed_qr_payload(
     verified_fields: Dict[str, Any],
     warnings: Optional[list] = None,
     expiry_seconds: int = EXPIRY_SECONDS_DEFAULT,
-    secret: str = DEFAULT_SECRET
+    secret: Optional[str] = None
 ) -> str:
     """
     Constructs and signs a privacy-preserving pre-verification token.
@@ -61,11 +83,11 @@ def generate_signed_qr_payload(
 
 def verify_and_decode_qr_payload(
     qr_token: str,
-    secret: str = DEFAULT_SECRET
+    secret: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Validates token structure, HMAC-SHA256 signature, expiry, and issuer.
-    Never trusts altered or expired tokens.
+    Supports key rotation: verifies against active key first, then fallback old key.
     """
     parts = qr_token.strip().split(".")
     if len(parts) != 2:
@@ -77,15 +99,29 @@ def verify_and_decode_qr_payload(
         }
 
     b64_payload, signature_claimed = parts
+    payload_bytes = b64_payload.encode("utf-8")
 
-    # Compute expected signature
-    expected_sig = sign_payload(b64_payload.encode("utf-8"), secret)
-    if not hmac.compare_digest(signature_claimed, expected_sig):
+    primary_secret = secret or get_signing_secret()
+    expected_sig = sign_payload(payload_bytes, primary_secret)
+
+    signature_valid = hmac.compare_digest(signature_claimed, expected_sig)
+    key_rotated_note = None
+
+    # Check rotated previous key if primary signature mismatch
+    if not signature_valid and not secret:
+        old_secret = get_rotated_old_secret()
+        if old_secret:
+            expected_old_sig = sign_payload(payload_bytes, old_secret)
+            if hmac.compare_digest(signature_claimed, expected_old_sig):
+                signature_valid = True
+                key_rotated_note = "Token verified using previous rotated secret key."
+
+    if not signature_valid:
         return {
             "valid_signature": False,
             "not_expired": False,
             "verification_scope": "NONE",
-            "warnings": ["Signature verification failed: Payload was altered or signed with a different key."]
+            "warnings": ["Signature verification failed: Payload was altered or signed with an unknown key."]
         }
 
     try:
@@ -104,6 +140,9 @@ def verify_and_decode_qr_payload(
     not_expired = exp > now
 
     warnings = list(payload.get("w", []))
+    if key_rotated_note:
+        warnings.append(key_rotated_note)
+
     if not not_expired:
         warnings.append("Token has expired.")
 

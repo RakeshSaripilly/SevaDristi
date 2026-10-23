@@ -4,11 +4,18 @@ from pathlib import Path
 from datetime import datetime, date
 from typing import Dict, Any, List, Optional
 
-SCHEMES_FILE = Path(__file__).resolve().parent.parent / "rules" / "schemes.json"
+import os
+SCHEMES_FILE_DEFAULT = Path(__file__).resolve().parent.parent / "rules" / "schemes.json"
 
 class SchemeRuleEngine:
     def __init__(self, schemes_file: Optional[Path] = None):
-        target_path = schemes_file or SCHEMES_FILE
+        env_path = os.getenv("RULES_FILE_PATH")
+        if schemes_file:
+            target_path = schemes_file
+        elif env_path and Path(env_path).exists():
+            target_path = Path(env_path)
+        else:
+            target_path = SCHEMES_FILE_DEFAULT
         if target_path.exists():
             with open(target_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)

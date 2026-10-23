@@ -1,7 +1,7 @@
 from __future__ import annotations
 import io
 import base64
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, List
 import cv2
 import numpy as np
 from PIL import Image
@@ -12,8 +12,12 @@ GLARE_THRESHOLD_DEFAULT = 0.08
 def compute_blur_score(image_bgr: np.ndarray) -> float:
     """
     Computes variance of the Laplacian as a proxy for image sharpness.
+    Scores < 110.0 typically denote motion blur or out-of-focus capture.
     """
-    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    if len(image_bgr.shape) == 3:
+        gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image_bgr
     score = cv2.Laplacian(gray, cv2.CV_64F).var()
     return float(round(score, 2))
 
@@ -23,7 +27,7 @@ def compute_glare_ratio(image_bgr: np.ndarray) -> float:
     V > 245 and S < 25.
     """
     hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
-    h, s, v = cv2.split(hsv)
+    _, s, v = cv2.split(hsv)
     glare_mask = (v > 245) & (s < 25)
     ratio = np.count_nonzero(glare_mask) / (image_bgr.shape[0] * image_bgr.shape[1])
     return float(round(ratio, 4))
@@ -49,6 +53,9 @@ def four_point_transform(image: np.ndarray, pts: np.ndarray) -> np.ndarray:
     height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
     max_h = max(int(height_a), int(height_b))
 
+    if max_w < 50 or max_h < 50:
+        return image
+
     dst = np.array([
         [0, 0],
         [max_w - 1, 0],
@@ -60,13 +67,12 @@ def four_point_transform(image: np.ndarray, pts: np.ndarray) -> np.ndarray:
     warped = cv2.warpPerspective(image, m, (max_w, max_h))
     return warped
 
-def auto_crop_document(image_bgr: np.ndarray) -> Tuple[np.ndarray, bool, str]:
+def auto_crop_document(image_bgr: np.ndarray) -> Tuple[np.ndarray, bool, str, Optional[List[List[int]]]]:
     """
     Attempts to locate document boundary contour and apply perspective crop.
-    Returns: (processed_image, crop_applied, note)
+    Returns: (processed_image, crop_applied, note, detected_corners)
     """
     orig_h, orig_w = image_bgr.shape[:2]
-    # Resize for robust contour detection
     ratio = orig_h / 500.0
     small = cv2.resize(image_bgr, (int(orig_w / ratio), 500))
     gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
@@ -86,19 +92,21 @@ def auto_crop_document(image_bgr: np.ndarray) -> Tuple[np.ndarray, bool, str]:
 
     if doc_cnt is not None:
         pts = doc_cnt.reshape(4, 2) * ratio
-        warped = four_point_transform(image_bgr, pts)
-        return warped, True, "Document boundary detected and perspective corrected."
+        corners_list = [[int(pt[0]), int(pt[1])] for pt in pts]
+        try:
+            warped = four_point_transform(image_bgr, pts)
+            return warped, True, "Document boundary detected and perspective corrected.", corners_list
+        except Exception:
+            pass
     
-    return image_bgr, False, "Document boundary not confidently distinguished; retained original frame."
+    return image_bgr, False, "Document boundary not distinguished; full frame retained.", None
 
 def detect_seal_and_signature_heuristics(image_bgr: np.ndarray) -> Dict[str, Any]:
     """
     Heuristic check for colored circular stamps (purple/blue/red ink) and
-    handwritten signature-like high-frequency stroke regions.
-    Does NOT assert legal authenticity.
+    handwritten signature-like stroke regions.
     """
     hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
-    h, s, v = cv2.split(hsv)
 
     # Blue / violet ink stamp detection (typical MeeSeva/Tahsildar stamps)
     lower_blue = np.array([90, 50, 50])
@@ -136,7 +144,7 @@ def detect_seal_and_signature_heuristics(image_bgr: np.ndarray) -> Dict[str, Any
         "possible_signature_detected": bool(possible_signature),
         "confidence": float(round(min(0.85, 0.5 + (0.35 if possible_seal else 0.0) + (0.15 if possible_signature else 0.0)), 2)),
         "method": "color_contour_stroke_heuristic",
-        "limitations": "Automated heuristic only. Does not verify legal authenticity or officer identity."
+        "limitations": "Automated heuristic only. Official seal verified at MeeSeva counter."
     }
 
 def image_to_base64_data_url(image_bgr: np.ndarray, max_dim: int = 800) -> str:
@@ -161,12 +169,12 @@ def analyze_document_image(
 ) -> Dict[str, Any]:
     """
     Full vision pipeline executed entirely in RAM:
-    1. Decode from BytesIO
-    2. Sharpness / Blur score
-    3. Glare ratio
+    1. Decode from BytesIO (never written to disk)
+    2. Sharpness / Blur score (Laplacian variance)
+    3. Glare ratio (HSV hotspot)
     4. Auto crop perspective
     5. Stamp & signature presence heuristics
-    6. In-memory data URL generation
+    6. Actionable Telugu / English advisories
     """
     nparr = np.frombuffer(image_bytes, np.uint8)
     image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -175,24 +183,42 @@ def analyze_document_image(
 
     blur_score = compute_blur_score(image_bgr)
     glare_ratio = compute_glare_ratio(image_bgr)
-    cropped_img, crop_applied, crop_note = auto_crop_document(image_bgr)
+    cropped_img, crop_applied, crop_note, corners = auto_crop_document(image_bgr)
     seal_sig = detect_seal_and_signature_heuristics(cropped_img)
 
     preview_url = image_to_base64_data_url(cropped_img)
 
+    is_blurred = bool(blur_score < blur_threshold)
+    has_glare = bool(glare_ratio > glare_threshold)
+
+    # Actionable citizen guidance
+    advisories: List[Dict[str, str]] = []
+    if is_blurred:
+        advisories.append({
+            "en": "Photo is blurred. Please retake photo within 15 cm with steady hands under bright light.",
+            "te": "ఫోటో అస్పష్టంగా ఉంది. 15 సెం.మీ దూరంలో మంచి వెలుతురులో చేతులు కదలకుండా మళ్ళీ తీయండి."
+        })
+    if has_glare:
+        advisories.append({
+            "en": "High flash glare detected. Turn off camera flash or angle away from overhead lights.",
+            "te": "కెమెరా ఫ్లాష్ వెలుగు పత్రంపై పడింది. ఫ్లాష్ ఆపి లేదా కాంతికి ఎదురుగా కాకుండా మళ్ళీ తీయండి."
+        })
+
     return {
         "blur_score": blur_score,
         "blur_threshold": blur_threshold,
-        "is_blurred": bool(blur_score < blur_threshold),
+        "is_blurred": is_blurred,
         "glare_ratio": glare_ratio,
         "glare_threshold": glare_threshold,
-        "has_glare": bool(glare_ratio > glare_threshold),
+        "has_glare": has_glare,
         "crop_applied": crop_applied,
         "crop_note": crop_note,
+        "detected_corners": corners,
         "possible_seal_detected": seal_sig["possible_seal_detected"],
         "possible_signature_detected": seal_sig["possible_signature_detected"],
         "seal_signature_confidence": seal_sig["confidence"],
         "seal_signature_limitations": seal_sig["limitations"],
         "preview_data_url": preview_url,
-        "processed_image_bgr": cropped_img
+        "processed_image_bgr": cropped_img,
+        "advisories": advisories
     }

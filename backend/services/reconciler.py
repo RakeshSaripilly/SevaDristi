@@ -218,10 +218,20 @@ def reconcile_names(
             f"Please ensure both documents belong to the same applicant."
         )
 
-    # Adjust for low OCR confidence if needed
-    if min_ocr_conf < 0.75 and status == "GREEN_MATCH":
+    # Adjust for low OCR confidence
+    transliteration_hint = None
+    if phonetic_sim >= 0.85 and token_sim < 0.85:
+        transliteration_hint = (
+            "Detected Telugu/Indic to English transliteration variation. "
+            "Characters often map phonetically (e.g., వ -> V/W, త -> T/TH, య -> Y/I)."
+        )
+
+    if min_ocr_conf < 0.60:
         status = "YELLOW_REVIEW"
-        explanation += f" Warning: Underlying OCR confidence is low ({int(min_ocr_conf * 100)}%). Manual verification advised."
+        explanation = (
+            f"Low OCR confidence ({int(min_ocr_conf * 100)}%). "
+            f"Camera capture was slightly unclear. Please verify and edit the extracted name if needed."
+        )
 
     return {
         "status": status,
@@ -235,6 +245,35 @@ def reconcile_names(
             "token_similarity": float(round(token_sim, 4)),
             "phonetic_similarity": float(round(phonetic_sim, 4)),
             "initial_expanded": bool(has_initial),
-            "explanation": explanation
+            "explanation": explanation,
+            "transliteration_hint": transliteration_hint
         }
     }
+
+def reconcile_all_extracted_names(
+    docs_with_names: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Compares all pairs of extracted names across uploaded documents.
+    docs_with_names format: [{"doc_type": "...", "name": "...", "confidence": 0.95}, ...]
+    """
+    comparisons: List[Dict[str, Any]] = []
+    valid_docs = [d for d in docs_with_names if d.get("name")]
+    if len(valid_docs) < 2:
+        return comparisons
+
+    # Compare pairwise, focusing on primary identity doc against other docs
+    base_doc = valid_docs[0]
+    for other_doc in valid_docs[1:]:
+        res = reconcile_names(
+            name_a=base_doc["name"],
+            name_b=other_doc["name"],
+            doc_a_type=base_doc["doc_type"],
+            doc_b_type=other_doc["doc_type"],
+            ocr_confidence_a=base_doc.get("confidence", 1.0),
+            ocr_confidence_b=other_doc.get("confidence", 1.0)
+        )
+        comparisons.append(res)
+
+    return comparisons
+
